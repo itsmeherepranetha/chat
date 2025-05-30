@@ -5,17 +5,17 @@ import classes from './page.module.css'
 
 export default function Page(){
 
-  const {sendMessage}=useSocket();
+  const {sendMessage,messages}=useSocket();
   const [message,setMessage]=useState("");
 
   return (
     <div>
       <div>
-        <h1>All messages will appear here</h1>
+        <input onChange={e=>setMessage(e.target.value)} className={classes["chat-input"]} type="text" placeholder="Type your message..."/>
+        <button className={classes['button']} onClick={()=>sendMessage(message)}>Send</button>
       </div>
       <div>
-        <input onChange={e=>setMessage(e.target.value)} className={classes["chat-input"]} type="text" name="" id="" placeholder="Type your message..."/>
-        <button className={classes['button']} onClick={()=>sendMessage(message)}>Send</button>
+        {messages.map(msg=><li>{msg}</li>)}
       </div>
     </div>
   )
