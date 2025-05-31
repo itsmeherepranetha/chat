@@ -2,6 +2,7 @@ import { Kafka, Producer } from "kafkajs";
 import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
+import prismaClient from "./prisma";
 dotenv.config();
 
 const kafka=new Kafka({
@@ -32,6 +33,34 @@ export async function produceMessage(message:string){
     await producer.send({
         messages:[{key:`message-${Date.now()}`,value:message}],
         topic:'MESSAGES'
+    })
+}
+
+export async function startMessageConsumer(){
+    console.log('consumer is running');
+    const consumer=kafka.consumer({groupId:"default"});
+    await consumer.connect();
+    await consumer.subscribe({topic:"MESSAGES",fromBeginning:true});
+
+    await consumer.run({
+        autoCommit:true,
+        eachMessage:async({message,pause})=>{
+            if(!message.value)return;
+            console.log('new messaged recieved for kafka consumer ',message.value);
+            try{
+                await prismaClient.message.create({
+                data:{
+                    text:message.value?.toString()
+                }
+            })
+            }catch(err){
+                console.log('something went wrong',{err});
+                //pause the consumer
+                pause();
+                setTimeout(()=>{consumer.resume([{topic:'MESSAGES'}])},60*1000) //resume after 1 min
+            }
+            
+        }
     })
 }
 
