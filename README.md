@@ -14,6 +14,7 @@ General tools used...
 - **Typecript** as the general language used to build the frontend and the backend
 - **Next.js(app router)** used in the frontend.
 - **Prisma** as the ORM for communication with PostgresDB
+- **Aiven** for cloud instances of postgres , redis and kafka.
 
 ---
 
