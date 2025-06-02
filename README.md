@@ -6,7 +6,7 @@ This project implements a real-time, horizontally scalable chat system using:
 
 - **Socket.IO** for WebSocket-based realtime communication between users
 - **Redis Pub/Sub** for communication between socket instances/servers.
-- **Apache Kafka** for durable, stream-based message ingestion.
+- **Apache Kafka(using kafka.js)** for durable, stream-based message ingestion.
 - **PostgreSQL** for persisting messages
 
 General tools used...
