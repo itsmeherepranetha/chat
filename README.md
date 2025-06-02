@@ -1,84 +1,32 @@
-# Turborepo starter
+# Chat
 
-This Turborepo starter is maintained by the Turborepo core team.
+A Real-time scalable chat app.
 
-## Using this example
+This project implements a real-time, horizontally scalable chat system using:
 
-Run the following command:
+- **Socket.IO** for WebSocket-based realtime communication between users
+- **Redis Pub/Sub** for communication between socket instances/servers.
+- **Apache Kafka** for durable, stream-based message ingestion.
+- **PostgreSQL** for persisting messages
 
-```sh
-npx create-turbo@latest
-```
+General tools used...
+- **Turborepo** to give a monorepo structure to the codebase.
+- **Typecript** as the general language used to build the frontend and the backend
+- **Next.js(app router)** used in the frontend.
+- **Prisma** as the ORM for communication with PostgresDB
 
-## What's inside?
+---
 
-This Turborepo includes the following packages/apps:
+# Architecture Overview
 
-### Apps and Packages
+![image](https://github.com/user-attachments/assets/c6d68c18-0e72-4862-b6d3-3c8b71908378)
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+# Why is this scalable?
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+The first idea is that , using only one socket server on top of http is not scalable since it cannot handle so many TCP connections at once. So we need to add more socket servers. But to enable communication between users connected to two different sockets , we need to have communication established between the sockets themselves , so using a pub/sub model is the easiest solution for that. So we can use Redis Pub/Sub for that.
 
-### Utilities
+The second idea is that , we need to persist the messages that are being generated. So we have to use a database for that. But in a chat application , there will be a lot of messages generated per second , so that many write requests to the database will shut down the database , since databases are not designed for such a high rate of throughput . So we have to keep a middleman to recieve the messages at that high rate of throughput.
+Apache kafka is the easiest solution for that(although kafka can also act as a temporary storage for messages themselves , but cannot be a database). The kafka producer will be the Redis subscriber ,and using Node.js as the kafka consumer. This consumer will then write to the postgres(which right now is each message to postgres, which is not very good , batch processing would be better). 
 
-This Turborepo has some additional tools already setup for you:
+Even if the postgres instance goes down , the consumer can pause for sometime , and then resume once again after a certain period , after the database is once again up and running.
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm build
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm dev
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-npx turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
